@@ -64,4 +64,16 @@ Simpler, static-data app. Player scores are hardcoded in a JS array near the top
 
 ## Git Workflow
 
-Main branch is `main`, remote is `origin` (GitHub: `oakleymize-tech/golf-trackers`). Commit after meaningful feature additions or fixes. Each file is independently deployable — changes to one don't affect the other.
+Main branch is `main`, remote is `origin` (GitHub: `oakleymize-tech/golf-trackers`). Each file is independently deployable — changes to one don't affect the other.
+
+**Commit and push after every meaningful unit of work** — a feature added, a bug fixed, a refactor completed. Never leave work uncommitted at the end of a session. The GitHub repo is the source of truth and must always reflect current state.
+
+Commit message format:
+- First line: short imperative summary (`Fix chart resize on mobile`, `Add stroke index field to round form`)
+- Body (if needed): one or two lines explaining *why*, not *what*
+- Always append the co-author trailer:
+  ```
+  Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+  ```
+
+Push immediately after committing (`git push`). Do not batch multiple sessions of work into a single push.

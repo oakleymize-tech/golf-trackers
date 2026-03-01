@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2026 Cognizant Classic – Leaderboard Tracker</title>
+  <style>
+    :root {
+      --green-dark:  #0d3b1f;
+      --green-mid:   #1a5c35;
+      --green-light: #2e8b57;
+      --gold:        #c9a84c;
+      --gold-light:  #f0d080;
+      --bg:          #0b1a10;
+      --surface:     #122318;
+      --surface2:    #1a2f20;
+      --border:      #2a4a30;
+      --text:        #e8f5e9;
+      --text-muted:  #7dab88;
+      --red:         #e55;
+      --under-par:   #4caf50;
+      --over-par:    #ef5350;
+      --even-par:    #90caf9;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HERO BANNER ── */
+    .hero {
+      background: linear-gradient(135deg, var(--green-dark) 0%, #0a2a15 100%);
+      border-bottom: 2px solid var(--gold);
+      padding: 28px 24px 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-logo {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .hero h1 {
+      font-size: clamp(20px, 4vw, 32px);
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+    .hero h1 span { color: var(--gold); }
+    .hero-meta {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 14px;
+    }
+    .hero-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .hero-meta-item strong { color: var(--text); }
+    .icon { font-size: 15px; }
+
+    /* ── STATUS BAR ── */
+    .status-bar {
+      background: var(--green-mid);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 20px;
+      font-size: 13px;
+    }
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .live-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: #f44336;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(1.3); }
+    }
+    .status-right { color: var(--gold-light); font-size: 12px; }
+
+    /* ── STATS STRIP ── */
+    .stats-strip {
+      display: flex;
+      gap: 1px;
+      background: var(--border);
+    }
+    .stat-card {
+      flex: 1;
+      background: var(--surface);
+      padding: 14px 16px;
+      text-align: center;
+      min-width: 120px;
+    }
+    .stat-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+    .stat-value { font-size: 22px; font-weight: 700; color: var(--gold); margin-top: 3px; }
+    .stat-sub   { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+    /* ── MAIN LAYOUT ── */
+    .main { padding: 20px; max-width: 1100px; margin: 0 auto; }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .filter-bar input {
+      flex: 1;
+      min-width: 180px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+    }
+    .filter-bar input:focus { border-color: var(--gold); }
+    .filter-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(201,168,76,.1);
+    }
+
+    /* ── LEADERBOARD TABLE ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 12px 14px;
+      text-align: left;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+    thead th:hover { color: var(--gold); }
+    thead th.sort-asc::after  { content: ' ↑'; color: var(--gold); }
+    thead th.sort-desc::after { content: ' ↓'; color: var(--gold); }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(42,74,48,.6);
+      transition: background .12s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,.03); }
+    tbody tr.leader-row { background: rgba(201,168,76,.07); }
+
+    td {
+      padding: 12px 14px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .pos-cell { font-weight: 700; font-size: 15px; color: var(--text-muted); min-width: 36px; }
+    .pos-cell.p1 { color: var(--gold); }
+    .pos-cell.p2 { color: #c0c0c0; }
+    .pos-cell.p3 { color: #cd7f32; }
+
+    .player-cell { min-width: 180px; }
+    .player-name { font-weight: 600; font-size: 14px; color: var(--text); }
+    .player-country { font-size: 11px; color: var(--text-muted); }
+
+    .score-cell {
+      font-weight: 600;
+      text-align: center;
+      min-width: 44px;
+    }
+    .score-cell.under { color: var(--under-par); }
+    .score-cell.over  { color: var(--over-par); }
+    .score-cell.even  { color: var(--even-par); }
+    .score-cell.dim   { color: var(--text-muted); font-weight: 400; }
+    .score-cell.live-score {
+      color: var(--gold);
+      position: relative;
+    }
+    .score-cell.live-score::after {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      margin-left: 4px;
+      vertical-align: middle;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    .total-cell {
+      font-weight: 700;
+      font-size: 15px;
+      text-align: center;
+    }
+    .total-cell.under { color: var(--under-par); }
+    .total-cell.over  { color: var(--over-par); }
+    .total-cell.even  { color: var(--even-par); }
+
+    .strokes-cell { text-align: center; color: var(--text-muted); font-size: 12px; }
+    .movement-cell { text-align: center; font-weight: 600; font-size: 13px; }
+    .movement-cell.up   { color: var(--under-par); }
+    .movement-cell.down { color: var(--over-par); }
+    .movement-cell.same { color: var(--text-muted); }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+    .badge-leader  { background: rgba(201,168,76,.2); color: var(--gold); border: 1px solid var(--gold); }
+    .badge-notable { background: rgba(78,160,100,.2); color: #81c784; border: 1px solid #4a7a50; }
+
+    /* ── NOTABLE MOMENTS ── */
+    .moments-section { margin-top: 24px; }
+    .section-title {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .moments-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .moment-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green-light);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .moment-card.gold-border { border-left-color: var(--gold); }
+    .moment-card.red-border  { border-left-color: #ef5350; }
+    .moment-title { font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 4px; }
+    .moment-desc  { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-top: 32px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .footer a { color: var(--gold); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      .stats-strip { flex-wrap: wrap; }
+      .stat-card   { min-width: 50%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-logo">PGA Tour · 2026</div>
+  <h1>Cognizant Classic<br><span>in The Palm Beaches</span></h1>
+  <div class="hero-meta">
+    <div class="hero-meta-item"><span class="icon">📍</span> <strong>PGA National – Champion Course</strong>, Palm Beach Gardens, FL</div>
+    <div class="hero-meta-item"><span class="icon">📅</span> Feb 26 – <strong>Mar 1, 2026</strong></div>
+    <div class="hero-meta-item"><span class="icon">💰</span> Purse: <strong>$9,600,000</strong> &nbsp;|&nbsp; 1st: <strong>$1,728,000</strong></div>
+    <div class="hero-meta-item"><span class="icon">⛳</span> Par 71 · 7,001 yds</div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="live-badge">
+    <div class="live-dot"></div>
+    ROUND 4 – FINAL ROUND IN PROGRESS
+  </div>
+  <div class="status-right">Data captured Mar 1, 2026 · Sources: PGA Tour / Yahoo Sports / CBS Sports</div>
+</div>
+
+<!-- STATS STRIP -->
+<div class="stats-strip" id="statsStrip">
+  <div class="stat-card">
+    <div class="stat-label">Leader</div>
+    <div class="stat-value" id="stat-leader">S. Lowry</div>
+    <div class="stat-sub">-19 to par</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Lead Margin</div>
+    <div class="stat-value" id="stat-margin">3</div>
+    <div class="stat-sub">strokes ahead</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Low Round</div>
+    <div class="stat-value">62</div>
+    <div class="stat-sub">Smotherman, R1</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Field Size</div>
+    <div class="stat-value">132</div>
+    <div class="stat-sub">players entered</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Cut Line</div>
+    <div class="stat-value">-2</div>
+    <div class="stat-sub">after Round 2</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <input type="text" id="searchBox" placeholder="Search player…" oninput="filterTable()" />
+    <button class="filter-btn active" onclick="setFilter('all', this)">All Players</button>
+    <button class="filter-btn" onclick="setFilter('top10', this)">Top 10</button>
+    <button class="filter-btn" onclick="setFilter('notable', this)">Notable</button>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <table id="leaderboard">
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)">Pos</th>
+          <th onclick="sortTable(1)">Player</th>
+          <th onclick="sortTable(2)" style="text-align:center">R1</th>
+          <th onclick="sortTable(3)" style="text-align:center">R2</th>
+          <th onclick="sortTable(4)" style="text-align:center">R3</th>
+          <th onclick="sortTable(5)" style="text-align:center">R4</th>
+          <th onclick="sortTable(6)" style="text-align:center">Total</th>
+          <th onclick="sortTable(7)" style="text-align:center">To Par</th>
+          <th style="text-align:center">Status</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+      </tbody>
+    </table>
+  </div>
+
+  <!-- NOTABLE MOMENTS -->
+  <div class="moments-section">
+    <div class="section-title">Notable Moments</div>
+    <div class="moments-grid">
+      <div class="moment-card gold-border">
+        <div class="moment-title">Historic Albatross</div>
+        <div class="moment-desc">Max McGreevy made an albatross on Hole 3 in Round 4 — the first albatross recorded at PGA National's Champion Course since the event began hosting there in 2007.</div>
+      </div>
+      <div class="moment-card gold-border">
+        <div class="moment-title">Smotherman Lights It Up</div>
+        <div class="moment-desc">Austin Smotherman opened with a stunning 9-under 62 in Round 1, seizing the early lead by one stroke over Nico Echavarria.</div>
+      </div>
+      <div class="moment-card">
+        <div class="moment-title">Lowry's Saturday Brilliance</div>
+        <div class="moment-desc">Shane Lowry posted a bogey-free 8-under 63 in Round 3, jumping into a share of the 54-hole lead at -13 alongside Smotherman.</div>
+      </div>
+      <div class="moment-card">
+        <div class="moment-title">Stanger's Comeback</div>
+        <div class="moment-desc">Jimmy Stanger earned his first check on TOUR since April 2024, having spent two years recovering from a serious elbow injury. He shot a 65 in Round 3 to move to -11.</div>
+      </div>
+      <div class="moment-card red-border">
+        <div class="moment-title">Horschel Frustration</div>
+        <div class="moment-desc">Billy Horschel snapped a club on a tree during Round 4, reflecting the challenging scoring conditions on the Champion Course.</div>
+      </div>
+      <div class="moment-card">
+        <div class="moment-title">Koepka in the Mix</div>
+        <div class="moment-desc">Brooks Koepka, who struggled with his putter in Round 1, fought back and was within striking distance of the leaders heading into the final holes.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div>Data sources:
+    <a href="https://www.pgatour.com/tournaments/2026/cognizant-classic/R2026010/overview" target="_blank">PGA Tour</a> ·
+    <a href="https://sports.yahoo.com/articles/cognizant-classic-leaderboard-live-updates-110245562.html" target="_blank">Yahoo Sports</a> ·
+    <a href="https://www.cbssports.com/golf/leaderboard/pga-tour/31000079/cognizant-classic-in-the-palm-beaches/recap/" target="_blank">CBS Sports</a>
+  </div>
+  <div>Last updated: Mar 1, 2026 — Round 4 in progress</div>
+</div>
+
+<script>
+  // ── DATA ──────────────────────────────────────────────────────────────────
+  // Scores in strokes (par 71 each round = par 284 total).
+  // "–" where individual round not confirmed; toPar is most reliable figure.
+  const PAR = 71;
+
+  const players = [
+    // pos, name, country, r1, r2, r3, r4(live), toPar, notable
+    { pos:  1, name: "Shane Lowry",        country: "Ireland 🇮🇪",       r1: 68, r2: 63, r3: 63, r4: null, toPar: -19, notable: true,  status: "LIVE", r4Live: "Thru 16" },
+    { pos:  2, name: "Nico Echavarria",    country: "Colombia 🇨🇴",      r1: 63, r2: 66, r3: 66, r4: null, toPar: -15, notable: false, status: "LIVE", r4Live: "Thru 14" },
+    { pos:  3, name: "Austin Smotherman",  country: "USA 🇺🇸",           r1: 62, r2: 69, r3: 69, r4: null, toPar: -14, notable: true,  status: "LIVE", r4Live: "Thru 15" },
+    { pos:  3, name: "Taylor Moore",       country: "USA 🇺🇸",           r1: 66, r2: 65, r3: 67, r4: null, toPar: -14, notable: false, status: "LIVE", r4Live: "Thru 13" },
+    { pos:  5, name: "Jimmy Stanger",      country: "USA 🇺🇸",           r1: 67, r2: 67, r3: 65, r4: null, toPar: -12, notable: true,  status: "LIVE", r4Live: "Thru 16" },
+    { pos:  5, name: "Ricky Castillo",     country: "USA 🇺🇸",           r1: 67, r2: 65, r3: 67, r4: null, toPar: -12, notable: false, status: "LIVE", r4Live: "Thru 12" },
+    { pos:  7, name: "Brooks Koepka",      country: "USA 🇺🇸",           r1: 70, r2: 64, r3: 65, r4: null, toPar: -11, notable: true,  status: "LIVE", r4Live: "Thru 15" },
+    { pos:  8, name: "Max McGreevy",       country: "USA 🇺🇸",           r1: 68, r2: 67, r3: 66, r4: null, toPar: -10, notable: true,  status: "LIVE", r4Live: "Thru 14" },
+    { pos:  9, name: "Billy Horschel",     country: "USA 🇺🇸",           r1: 67, r2: 66, r3: 68, r4: null, toPar:  -9, notable: true,  status: "LIVE", r4Live: "Thru 13" },
+    { pos: 10, name: "Chris Kirk",         country: "USA 🇺🇸",           r1: 68, r2: 65, r3: 69, r4: null, toPar:  -8, notable: false, status: "LIVE", r4Live: "Thru 11" },
+    { pos: 11, name: "Sepp Straka",        country: "Austria 🇦🇹",       r1: 70, r2: 65, r3: 67, r4: null, toPar:  -7, notable: false, status: "LIVE", r4Live: "Thru 10" },
+    { pos: 12, name: "Sungjae Im",         country: "South Korea 🇰🇷",   r1: 69, r2: 67, r3: 67, r4: null, toPar:  -6, notable: false, status: "LIVE", r4Live: "Thru 14" },
+    { pos: 13, name: "Keith Mitchell",     country: "USA 🇺🇸",           r1: 70, r2: 66, r3: 68, r4: null, toPar:  -5, notable: false, status: "LIVE", r4Live: "Thru 9"  },
+  ];
+
+  // Derive total strokes from toPar (par=284 for 4 rounds of par 71)
+  const TOTAL_PAR = 284;
+  players.forEach(p => {
+    // Calculate inferred round totals (r1+r2+r3 known, r4 in progress)
+    p.r1Disp = p.r1;
+    p.r2Disp = p.r2;
+    p.r3Disp = p.r3;
+    p.totalStrokes = p.r1 + p.r2 + p.r3; // R4 not complete
+  });
+
+  let currentFilter = 'all';
+  let sortCol = 7; // toPar
+  let sortDir = 1;
+
+  function scoreClass(val) {
+    if (val === null || val === undefined) return 'dim';
+    const n = typeof val === 'number' ? val - PAR : 0;
+    if (n < 0) return 'under';
+    if (n > 0) return 'over';
+    return 'even';
+  }
+  function scoreStr(val) {
+    if (val === null) return '<span class="score-cell live-score dim">LIVE</span>';
+    const diff = val - PAR;
+    let s = diff < 0 ? diff : (diff > 0 ? '+' + diff : 'E');
+    return `<span class="score-cell ${scoreClass(val)}">${val}<sup style="font-size:9px;margin-left:2px">${s}</sup></span>`;
+  }
+  function toParStr(val) {
+    if (val < 0) return `<span class="total-cell under">${val}</span>`;
+    if (val > 0) return `<span class="total-cell over">+${val}</span>`;
+    return `<span class="total-cell even">E</span>`;
+  }
+  function posClass(pos) {
+    if (pos === 1) return 'p1';
+    if (pos === 2) return 'p2';
+    if (pos === 3) return 'p3';
+    return '';
+  }
+
+  function renderTable() {
+    let data = [...players];
+
+    // Filter
+    const q = document.getElementById('searchBox').value.toLowerCase();
+    if (q) data = data.filter(p => p.name.toLowerCase().includes(q) || p.country.toLowerCase().includes(q));
+    if (currentFilter === 'top10') data = data.filter(p => p.pos <= 10);
+    if (currentFilter === 'notable') data = data.filter(p => p.notable);
+
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = data.map((p, i) => {
+      const isLeader = p.pos === 1;
+      const badge = isLeader
+        ? '<span class="badge badge-leader">LEADER</span>'
+        : (p.notable ? '<span class="badge badge-notable">NOTABLE</span>' : '');
+
+      return `
+        <tr class="${isLeader ? 'leader-row' : ''}">
+          <td class="pos-cell ${posClass(p.pos)}">${p.pos === data[i-1]?.pos ? '' : (p.pos <= 3 ? ['🥇','🥈','🥉'][p.pos-1] : p.pos)}</td>
+          <td class="player-cell">
+            <div class="player-name">${p.name}</div>
+            <div class="player-country">${p.country} &nbsp;·&nbsp; ${p.r4Live}</div>
+          </td>
+          <td class="score-cell ${scoreClass(p.r1)}" style="text-align:center">${p.r1}<sup style="font-size:9px;margin-left:2px">${p.r1-PAR === 0 ? 'E' : (p.r1-PAR < 0 ? p.r1-PAR : '+' + (p.r1-PAR))}</sup></td>
+          <td class="score-cell ${scoreClass(p.r2)}" style="text-align:center">${p.r2}<sup style="font-size:9px;margin-left:2px">${p.r2-PAR === 0 ? 'E' : (p.r2-PAR < 0 ? p.r2-PAR : '+' + (p.r2-PAR))}</sup></td>
+          <td class="score-cell ${scoreClass(p.r3)}" style="text-align:center">${p.r3}<sup style="font-size:9px;margin-left:2px">${p.r3-PAR === 0 ? 'E' : (p.r3-PAR < 0 ? p.r3-PAR : '+' + (p.r3-PAR))}</sup></td>
+          <td class="score-cell live-score" style="text-align:center">LIVE</td>
+          <td class="score-cell" style="text-align:center;color:var(--text-muted);font-size:12px">${p.totalStrokes}</td>
+          <td style="text-align:center">${toParStr(p.toPar)}</td>
+          <td style="text-align:center">${badge}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  function filterTable() { renderTable(); }
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTable();
+  }
+
+  function sortTable(col) {
+    const th = document.querySelectorAll('thead th');
+    th.forEach(t => { t.classList.remove('sort-asc','sort-desc'); });
+    if (sortCol === col) sortDir *= -1;
+    else { sortCol = col; sortDir = 1; }
+    th[col].classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+
+    const keys = ['pos','name','r1','r2','r3','r4','totalStrokes','toPar'];
+    players.sort((a,b) => {
+      const av = a[keys[col]] ?? 999;
+      const bv = b[keys[col]] ?? 999;
+      return typeof av === 'string'
+        ? av.localeCompare(bv) * sortDir
+        : (av - bv) * sortDir;
+    });
+    renderTable();
+  }
+
+  renderTable();
+</script>
+</body>
+</html>

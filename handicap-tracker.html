@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Handicap Improvement Tracker</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-deep: #06080f;
+  --bg-navy: #0a0e1a;
+  --surface: #111827;
+  --surface-hover: #162033;
+  --border: #1e2d40;
+  --gold: #c6a84b;
+  --gold-dim: #a08035;
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --teal: #06b6d4;
+  --red: #ef4444;
+  --green: #22c55e;
+  --radius: 12px;
+}
+
+html, body { height: 100%; background: var(--bg-deep); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px; height: 64px;
+  background: rgba(10,14,26,0.95); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo { display: flex; align-items: center; gap: 10px; }
+.nav-logo-icon { width: 32px; height: 32px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.nav-logo-text { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+.nav-tabs { display: flex; gap: 4px; }
+.nav-tab {
+  padding: 8px 18px; border-radius: 8px; border: none; background: transparent;
+  color: var(--text-muted); font-size: 13px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+}
+.nav-tab:hover { color: var(--text); background: var(--surface); }
+.nav-tab.active { color: var(--gold); background: rgba(198,168,75,0.1); }
+
+/* LAYOUT */
+main { padding-top: 64px; min-height: 100vh; }
+.view { display: none; padding: 40px 32px; max-width: 1200px; margin: 0 auto; }
+.view.active { display: block; }
+
+/* SECTION LABEL */
+.section-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 6px;
+}
+
+/* CARDS */
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px; transition: box-shadow 0.2s, transform 0.2s;
+}
+.card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.4); transform: translateY(-1px); }
+.card-title { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+.card-value { font-size: 48px; font-weight: 800; line-height: 1; color: var(--text); }
+.card-sub { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+
+/* GRID */
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+
+/* HERO */
+.hero {
+  background: linear-gradient(135deg, #0d1526 0%, #111827 100%);
+  border: 1px solid var(--border); border-radius: 16px;
+  padding: 48px; margin-bottom: 32px;
+  display: flex; align-items: center; gap: 48px;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; top: -60px; right: -60px;
+  width: 220px; height: 220px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(198,168,75,0.08) 0%, transparent 70%);
+}
+.hero-main { flex: 1; }
+.hero-label { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+.hero-index { font-size: 96px; font-weight: 900; line-height: 1; letter-spacing: -2px; color: var(--text); }
+.hero-index span { font-size: 32px; font-weight: 400; color: var(--text-muted); letter-spacing: 0; }
+.hero-meta { font-size: 14px; color: var(--text-muted); margin-top: 12px; }
+.hero-meta strong { color: var(--teal); }
+.hero-ring { flex-shrink: 0; }
+
+/* PROGRESS RING */
+.ring-svg { transform: rotate(-90deg); }
+.ring-track { fill: none; stroke: var(--border); stroke-width: 8; }
+.ring-fill { fill: none; stroke: var(--gold); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+.ring-label { text-anchor: middle; dominant-baseline: middle; fill: var(--text); font-size: 13px; font-weight: 700; }
+.ring-sublabel { text-anchor: middle; dominant-baseline: middle; fill: var(--text-muted); font-size: 10px; }
+
+/* MILESTONE TRACK */
+.milestone-track { display: flex; align-items: center; gap: 0; margin: 32px 0 8px; position: relative; }
+.milestone-line { flex: 1; height: 2px; background: var(--border); position: relative; }
+.milestone-line.reached { background: var(--gold); }
+.milestone-dot {
+  width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border);
+  background: var(--bg-navy); flex-shrink: 0; position: relative; cursor: default;
+  transition: all 0.2s;
+}
+.milestone-dot.reached { border-color: var(--gold); background: var(--gold); }
+.milestone-dot.current { border-color: var(--teal); box-shadow: 0 0 12px rgba(6,182,212,0.5); background: var(--teal); }
+.milestone-labels { display: flex; justify-content: space-between; margin-top: 8px; }
+.milestone-item { text-align: center; font-size: 11px; color: var(--text-muted); }
+.milestone-item strong { display: block; font-size: 13px; color: var(--text); }
+.milestone-item.reached strong { color: var(--gold); }
+.milestone-item.current strong { color: var(--teal); }
+
+/* STATS BENCHMARKS */
+.bench-row { margin-bottom: 20px; }
+.bench-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.bench-name { font-size: 13px; font-weight: 600; }
+.bench-values { font-size: 12px; color: var(--text-muted); }
+.bench-bar-bg { height: 8px; background: var(--border); border-radius: 4px; overflow: visible; position: relative; }
+.bench-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+.bench-bar-target { position: absolute; top: -4px; width: 2px; height: 16px; background: var(--gold); border-radius: 1px; }
+.bench-gap { font-size: 11px; margin-top: 4px; }
+.gap-good { color: var(--teal); }
+.gap-ok { color: var(--gold); }
+.gap-bad { color: var(--red); }
+
+/* INSIGHTS */
+.insight-card {
+  background: linear-gradient(135deg, rgba(6,182,212,0.05), rgba(198,168,75,0.05));
+  border: 1px solid rgba(198,168,75,0.25); border-radius: var(--radius);
+  padding: 28px; margin-bottom: 20px;
+}
+.insight-badge {
+  display: inline-block; padding: 4px 10px; border-radius: 20px;
+  background: rgba(198,168,75,0.15); color: var(--gold);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.insight-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.insight-body { font-size: 14px; color: var(--text-muted); line-height: 1.65; }
+.insight-stat { font-size: 32px; font-weight: 800; color: var(--teal); margin: 16px 0 4px; }
+
+/* CHART */
+#chartCanvas { width: 100%; border-radius: var(--radius); display: block; }
+
+/* FORM */
+.form-modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(6,8,15,0.8); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.form-modal-overlay.open { opacity: 1; pointer-events: all; }
+.form-modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 36px; width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto;
+  transform: translateY(20px); transition: transform 0.25s;
+}
+.form-modal-overlay.open .form-modal { transform: translateY(0); }
+.form-title { font-size: 18px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 24px; color: var(--gold); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: 1 / -1; }
+label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+input, select {
+  background: var(--bg-navy); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); padding: 10px 14px; font-size: 14px; outline: none;
+  transition: border-color 0.2s;
+}
+input:focus, select:focus { border-color: var(--gold); }
+input::placeholder { color: #4a5568; }
+select option { background: var(--surface); }
+.form-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+.btn {
+  padding: 10px 24px; border-radius: 8px; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+  border: none; transition: all 0.2s;
+}
+.btn-primary { background: var(--gold); color: var(--bg-deep); }
+.btn-primary:hover { background: #d4b55e; transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--text-muted); color: var(--text); }
+.btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.btn-danger:hover { background: rgba(239,68,68,0.25); }
+.btn-sm { padding: 6px 14px; font-size: 11px; }
+.btn-teal { background: var(--teal); color: var(--bg-deep); }
+.btn-teal:hover { background: #0ea5d4; }
+
+/* TABLE */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  text-align: left; padding: 10px 14px; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+td { padding: 12px 14px; border-bottom: 1px solid rgba(30,45,64,0.5); vertical-align: middle; }
+tr:hover td { background: var(--surface-hover); }
+tr:last-child td { border-bottom: none; }
+.badge {
+  display: inline-block; padding: 3px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 700;
+}
+.badge-gold { background: rgba(198,168,75,0.15); color: var(--gold); }
+.badge-teal { background: rgba(6,182,212,0.15); color: var(--teal); }
+.badge-red  { background: rgba(239,68,68,0.15); color: var(--red); }
+
+/* PROFILE SETUP */
+.setup-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: var(--bg-deep);
+  display: flex; align-items: center; justify-content: center;
+}
+.setup-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 48px; max-width: 480px; width: 100%;
+}
+.setup-title { font-size: 22px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+.setup-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 32px; }
+
+/* EXPORT BTN */
+.top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.page-title { font-size: 22px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* EMPTY STATE */
+.empty { text-align: center; padding: 64px 32px; color: var(--text-muted); }
+.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+.empty-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+
+/* DIVIDER */
+.divider { height: 1px; background: var(--border); margin: 32px 0; }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  nav { padding: 0 16px; }
+  .nav-logo-text { display: none; }
+  .nav-tab { padding: 8px 12px; font-size: 11px; }
+  .view { padding: 24px 16px; }
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .hero { flex-direction: column; padding: 28px; gap: 24px; }
+  .hero-index { font-size: 64px; }
+  .form-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- PROFILE SETUP OVERLAY -->
+<div class="setup-overlay" id="setupOverlay">
+  <div class="setup-box">
+    <div class="setup-title">⛳ Welcome</div>
+    <div class="setup-sub">Set up your handicap improvement tracker. This only takes a moment.</div>
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="form-group">
+        <label>Your Name</label>
+        <input id="setupName" type="text" placeholder="e.g. Alex">
+      </div>
+      <div class="form-group">
+        <label>Current Handicap Index</label>
+        <input id="setupStart" type="number" step="0.1" value="16.0">
+      </div>
+      <div class="form-group">
+        <label>Target Handicap Index</label>
+        <input id="setupTarget" type="number" step="0.1" value="10.0">
+      </div>
+      <div class="form-group">
+        <label>Target Date</label>
+        <input id="setupDate" type="date" value="2026-12-31">
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="saveProfile()">Get Started</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ROUND MODAL -->
+<div class="form-modal-overlay" id="addRoundOverlay">
+  <div class="form-modal">
+    <div class="form-title">Log a Round</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="rDate">
+      </div>
+      <div class="form-group">
+        <label>Course Name</label>
+        <input type="text" id="rCourse" placeholder="e.g. Augusta National">
+      </div>
+      <div class="form-group">
+        <label>Tees Played</label>
+        <select id="rTees">
+          <option>White</option><option>Blue</option><option>Gold</option><option>Red</option><option>Black</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Gross Score</label>
+        <input type="number" id="rScore" placeholder="87" min="50" max="150">
+      </div>
+      <div class="form-group">
+        <label>Course Rating</label>
+        <input type="number" id="rRating" step="0.1" placeholder="72.0" min="60" max="80">
+      </div>
+      <div class="form-group">
+        <label>Slope Rating</label>
+        <input type="number" id="rSlope" placeholder="130" min="55" max="155">
+      </div>
+      <div class="form-group">
+        <label>Fairways Hit</label>
+        <input type="number" id="rFairways" placeholder="8" min="0" max="18">
+      </div>
+      <div class="form-group">
+        <label>Fairways Total</label>
+        <input type="number" id="rFairwaysTotal" placeholder="14" min="0" max="18">
+      </div>
+      <div class="form-group">
+        <label>Greens in Regulation</label>
+        <input type="number" id="rGIR" placeholder="6" min="0" max="18">
+      </div>
+      <div class="form-group">
+        <label>Total Putts</label>
+        <input type="number" id="rPutts" placeholder="33" min="18" max="60">
+      </div>
+      <div class="form-group full">
+        <label>Penalty Strokes</label>
+        <input type="number" id="rPenalties" placeholder="2" min="0" max="20">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRound()">Save Round</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-icon">⛳</div>
+    <div class="nav-logo-text">HCP Tracker</div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showView('dashboard')">Dashboard</button>
+    <button class="nav-tab" onclick="openModal()">+ Round</button>
+    <button class="nav-tab" onclick="showView('chart')">Progress</button>
+    <button class="nav-tab" onclick="showView('stats')">Stats</button>
+    <button class="nav-tab" onclick="showView('insights')">Insights</button>
+    <button class="nav-tab" onclick="showView('history')">History</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- DASHBOARD VIEW -->
+<div class="view active" id="view-dashboard">
+  <div class="hero" id="heroSection">
+    <div class="hero-main">
+      <div class="hero-label">Current Handicap Index</div>
+      <div class="hero-index" id="heroHCP">—<span>.—</span></div>
+      <div class="hero-meta" id="heroMeta">Log your first round to calculate your handicap index</div>
+      <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="openModal()">+ Log Round</button>
+        <button class="btn btn-ghost" onclick="showView('chart')">View Progress</button>
+      </div>
+    </div>
+    <div class="hero-ring">
+      <svg width="140" height="140" class="ring-svg" id="ringChart">
+        <circle class="ring-track" cx="70" cy="70" r="58"/>
+        <circle class="ring-fill" cx="70" cy="70" r="58" id="ringFill"
+          stroke-dasharray="364.4" stroke-dashoffset="364.4"/>
+      </svg>
+      <div id="ringText" style="text-align:center;margin-top:-140px;height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+        <div style="font-size:22px;font-weight:800;" id="ringPct">0%</div>
+        <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;">To Goal</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="grid-4" style="margin-bottom:32px;" id="dashCards">
+    <div class="card">
+      <div class="card-title">Rounds Logged</div>
+      <div class="card-value" id="dcRounds">0</div>
+      <div class="card-sub">of 20 for full index</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Starting Index</div>
+      <div class="card-value" id="dcStart" style="color:var(--text-muted)">16.0</div>
+      <div class="card-sub">your baseline</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Target Index</div>
+      <div class="card-value" id="dcTarget" style="color:var(--gold)">10.0</div>
+      <div class="card-sub" id="dcTargetDate">by Dec 31, 2026</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Milestone Status</div>
+      <div class="card-value" id="dcMilestone" style="font-size:28px;padding-top:8px;">—</div>
+      <div class="card-sub" id="dcMilestoneSub">no rounds yet</div>
+    </div>
+  </div>
+
+  <!-- MILESTONE TRACK -->
+  <div class="card" style="margin-bottom:32px;">
+    <div class="card-title">2026 Quarterly Milestones</div>
+    <div style="margin-top:16px;">
+      <div class="milestone-track" id="milestoneTrack"></div>
+      <div class="milestone-labels" id="milestoneLabels"></div>
+    </div>
+  </div>
+
+  <!-- RECENT ROUNDS -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="card-title" style="margin-bottom:0">Recent Rounds</div>
+      <button class="btn btn-ghost btn-sm" onclick="showView('history')">View All</button>
+    </div>
+    <div id="recentRounds"></div>
+  </div>
+</div>
+
+<!-- CHART VIEW -->
+<div class="view" id="view-chart">
+  <div class="top-bar">
+    <div class="page-title">Progress Chart</div>
+  </div>
+  <div class="card" style="padding:32px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <div>
+        <div class="section-label">Handicap Index Over Time</div>
+        <div style="font-size:13px;color:var(--text-muted);">Gold line = your index · Red dashed = goal (10.0)</div>
+      </div>
+      <div style="display:flex;gap:16px;font-size:12px;color:var(--text-muted);">
+        <span><span style="color:var(--gold);font-weight:700;">——</span> Handicap</span>
+        <span><span style="color:var(--red);">- -</span> Goal (10)</span>
+      </div>
+    </div>
+    <canvas id="chartCanvas" height="340"></canvas>
+    <div id="chartEmpty" class="empty" style="display:none;">
+      <div class="empty-icon">📈</div>
+      <div class="empty-title">No data yet</div>
+      <div>Log at least 1 round to see your progress chart.</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS VIEW -->
+<div class="view" id="view-stats">
+  <div class="top-bar">
+    <div class="page-title">Stats Panel</div>
+    <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Export CSV</button>
+  </div>
+  <div class="grid-4" id="statsCards" style="margin-bottom:32px;"></div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:20px;">Benchmark vs 10-Handicap Targets</div>
+    <div id="benchmarks"></div>
+  </div>
+</div>
+
+<!-- INSIGHTS VIEW -->
+<div class="view" id="view-insights">
+  <div class="top-bar">
+    <div class="page-title">Smart Insights</div>
+  </div>
+  <div id="insightsContent"></div>
+</div>
+
+<!-- HISTORY VIEW -->
+<div class="view" id="view-history">
+  <div class="top-bar">
+    <div class="page-title">Round History</div>
+    <button class="btn btn-teal btn-sm" onclick="exportCSV()">Export CSV</button>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th><th>Course</th><th>Score</th><th>Differential</th>
+            <th>FW%</th><th>GIR%</th><th>Putts</th><th>Penalties</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+      <div id="historyEmpty" class="empty" style="display:none;">
+        <div class="empty-icon">🏌️</div>
+        <div class="empty-title">No rounds logged yet</div>
+        <div>Click "+ Round" in the nav to log your first round.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ── STORAGE ────────────────────────────────────────────────────────────────
+const ROUNDS_KEY   = 'hcp_rounds';
+const PROFILE_KEY  = 'hcp_profile';
+
+function getRounds()  { return JSON.parse(localStorage.getItem(ROUNDS_KEY)  || '[]'); }
+function getProfile() { return JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null'); }
+function saveRounds(r) { localStorage.setItem(ROUNDS_KEY, JSON.stringify(r)); }
+function saveProfileData(p) { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); }
+
+function uuid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+// ── PROFILE SETUP ──────────────────────────────────────────────────────────
+function saveProfile() {
+  const name   = document.getElementById('setupName').value.trim() || 'Golfer';
+  const start  = parseFloat(document.getElementById('setupStart').value) || 16;
+  const target = parseFloat(document.getElementById('setupTarget').value) || 10;
+  const date   = document.getElementById('setupDate').value || '2026-12-31';
+  saveProfileData({ name, startingHcp: start, targetHcp: target, targetDate: date });
+  document.getElementById('setupOverlay').style.display = 'none';
+  refresh();
+}
+
+// ── WHS HANDICAP CALCULATOR ────────────────────────────────────────────────
+// Differential = (Gross - Rating) * 113 / Slope
+function calcDifferential(gross, rating, slope) {
+  return +((gross - rating) * 113 / slope).toFixed(1);
+}
+
+// WHS reduced-round table (rounds → count to average)
+const WHS_TABLE = [0,1,1,1,1,1,2,2,2,2,3,3,4,4,5,5,6,6,7,7,8];
+// index = number of rounds (1-20), value = how many lowest to use
+
+function calcHandicapIndex(rounds) {
+  if (!rounds.length) return null;
+  const diffs = rounds.map(r => r.differential).sort((a,b) => a-b);
+  const n = Math.min(rounds.length, 20);
+  const use = WHS_TABLE[n];
+  if (!use) return null;
+  const lowest = diffs.slice(0, use);
+  const avg = lowest.reduce((s,v) => s+v, 0) / lowest.length;
+  return +(avg * 0.96).toFixed(1);
+}
+
+function handicapIndexFromRounds(rounds) {
+  const sorted = [...rounds].sort((a,b) => new Date(a.date) - new Date(b.date));
+  const last20 = sorted.slice(-20);
+  return calcHandicapIndex(last20);
+}
+
+// Build time-series of handicap index after each round
+function buildTimeSeries(rounds) {
+  const sorted = [...rounds].sort((a,b) => new Date(a.date) - new Date(b.date));
+  const series = [];
+  for (let i = 0; i < sorted.length; i++) {
+    const window = sorted.slice(Math.max(0, i-19), i+1);
+    const hcp = calcHandicapIndex(window);
+    series.push({ date: sorted[i].date, hcp, round: sorted[i] });
+  }
+  return series;
+}
+
+// ── MODAL ──────────────────────────────────────────────────────────────────
+function openModal() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('rDate').value = today;
+  document.getElementById('rCourse').value = '';
+  document.getElementById('rScore').value = '';
+  document.getElementById('rRating').value = '';
+  document.getElementById('rSlope').value = '';
+  document.getElementById('rFairways').value = '';
+  document.getElementById('rFairwaysTotal').value = '14';
+  document.getElementById('rGIR').value = '';
+  document.getElementById('rPutts').value = '';
+  document.getElementById('rPenalties').value = '';
+  document.getElementById('addRoundOverlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('addRoundOverlay').classList.remove('open');
+}
+document.getElementById('addRoundOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+function saveRound() {
+  const date         = document.getElementById('rDate').value;
+  const course       = document.getElementById('rCourse').value.trim() || 'Unknown Course';
+  const tees         = document.getElementById('rTees').value;
+  const grossScore   = parseInt(document.getElementById('rScore').value);
+  const courseRating = parseFloat(document.getElementById('rRating').value);
+  const slopeRating  = parseInt(document.getElementById('rSlope').value);
+  const fairwaysHit  = parseInt(document.getElementById('rFairways').value) || 0;
+  const fairwaysTotal= parseInt(document.getElementById('rFairwaysTotal').value) || 14;
+  const gir          = parseInt(document.getElementById('rGIR').value) || 0;
+  const putts        = parseInt(document.getElementById('rPutts').value) || 0;
+  const penalties    = parseInt(document.getElementById('rPenalties').value) || 0;
+
+  if (!date || isNaN(grossScore) || isNaN(courseRating) || isNaN(slopeRating)) {
+    alert('Please fill in Date, Score, Course Rating, and Slope Rating.');
+    return;
+  }
+
+  const differential = calcDifferential(grossScore, courseRating, slopeRating);
+  const round = {
+    id: uuid(), date, course, tees, courseRating, slopeRating,
+    grossScore, fairwaysHit, fairwaysTotal, gir, putts, penalties, differential
+  };
+  const rounds = getRounds();
+  rounds.push(round);
+  saveRounds(rounds);
+  closeModal();
+  refresh();
+}
+
+// ── VIEWS ──────────────────────────────────────────────────────────────────
+let activeView = 'dashboard';
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const map = { dashboard: 0, chart: 2, stats: 3, insights: 4, history: 5 };
+  if (map[name] !== undefined) tabs[map[name]].classList.add('active');
+  activeView = name;
+  if (name === 'chart') drawChart();
+}
+
+// ── MILESTONES ─────────────────────────────────────────────────────────────
+function getMilestones(profile) {
+  const start  = profile.startingHcp;
+  const target = profile.targetHcp;
+  const year   = profile.targetDate.slice(0,4);
+  return [
+    { label: 'Start',    date: `${year}-01-01`, hcp: start },
+    { label: 'Q1',       date: `${year}-03-31`, hcp: +(start - (start-target)*0.25).toFixed(1) },
+    { label: 'Q2',       date: `${year}-06-30`, hcp: +(start - (start-target)*0.50).toFixed(1) },
+    { label: 'Q3',       date: `${year}-09-30`, hcp: +(start - (start-target)*0.75).toFixed(1) },
+    { label: 'Goal',     date: `${year}-12-31`, hcp: target },
+  ];
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const profile = getProfile();
+  const rounds  = getRounds();
+  const hcp     = handicapIndexFromRounds(rounds);
+  const start   = profile.startingHcp;
+  const target  = profile.targetHcp;
+
+  // Hero
+  if (hcp !== null) {
+    const whole = Math.floor(hcp);
+    const frac  = (hcp % 1).toFixed(1).slice(1);
+    document.getElementById('heroHCP').innerHTML = `${whole}<span>${frac}</span>`;
+    const roundCount = rounds.length;
+    document.getElementById('heroMeta').innerHTML =
+      `Based on <strong>${roundCount}</strong> round${roundCount !== 1 ? 's' : ''} · ${roundCount < 20 ? `${20-roundCount} more for full 20-round index` : 'Full 20-round index active'}`;
+  } else {
+    document.getElementById('heroHCP').innerHTML = `—<span>.—</span>`;
+    document.getElementById('heroMeta').textContent = 'Log your first round to calculate your handicap index';
+  }
+
+  // Progress ring
+  const progress = hcp !== null ? Math.max(0, Math.min(1, (start - hcp) / (start - target))) : 0;
+  const circumference = 2 * Math.PI * 58;
+  const offset = circumference * (1 - progress);
+  document.getElementById('ringFill').style.strokeDashoffset = offset;
+  document.getElementById('ringPct').textContent = Math.round(progress * 100) + '%';
+
+  // Stat cards
+  document.getElementById('dcRounds').textContent = rounds.length;
+  document.getElementById('dcStart').textContent  = start.toFixed(1);
+  document.getElementById('dcTarget').textContent = target.toFixed(1);
+  document.getElementById('dcTargetDate').textContent = 'by ' + fmtDate(profile.targetDate);
+
+  // Milestone status
+  const milestones = getMilestones(profile);
+  const today = new Date().toISOString().split('T')[0];
+  let expectedMilestone = milestones[0];
+  for (const m of milestones) { if (m.date <= today) expectedMilestone = m; }
+  const milEl = document.getElementById('dcMilestone');
+  const milSub = document.getElementById('dcMilestoneSub');
+  if (hcp !== null) {
+    const diff = hcp - expectedMilestone.hcp;
+    if (diff <= 0) {
+      milEl.textContent = 'On Track';
+      milEl.style.color = 'var(--teal)';
+      milSub.textContent = `${Math.abs(diff).toFixed(1)} ahead of ${expectedMilestone.label} target`;
+    } else {
+      milEl.textContent = 'Behind';
+      milEl.style.color = 'var(--red)';
+      milSub.textContent = `${diff.toFixed(1)} behind ${expectedMilestone.label} target`;
+    }
+  } else {
+    milEl.textContent = '—';
+    milEl.style.color = '';
+    milSub.textContent = 'no rounds yet';
+  }
+
+  // Milestone track
+  renderMilestoneTrack(milestones, hcp);
+
+  // Recent rounds (last 5)
+  const sorted = [...rounds].sort((a,b) => new Date(b.date)-new Date(a.date)).slice(0,5);
+  const rr = document.getElementById('recentRounds');
+  if (!sorted.length) {
+    rr.innerHTML = `<div class="empty"><div class="empty-icon">🏌️</div><div class="empty-title">No rounds yet</div><div>Click "+ Round" to log your first round.</div></div>`;
+  } else {
+    rr.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr>
+        <th style="text-align:left;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border)">Date</th>
+        <th style="text-align:left;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border)">Course</th>
+        <th style="text-align:left;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border)">Score</th>
+        <th style="text-align:left;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border)">Differential</th>
+      </tr></thead>
+      <tbody>${sorted.map(r => `<tr>
+        <td style="padding:10px 12px;border-bottom:1px solid rgba(30,45,64,.4)">${r.date}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid rgba(30,45,64,.4)">${esc(r.course)}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid rgba(30,45,64,.4)"><strong>${r.grossScore}</strong></td>
+        <td style="padding:10px 12px;border-bottom:1px solid rgba(30,45,64,.4)"><span class="badge ${r.differential < 12 ? 'badge-teal' : r.differential < 16 ? 'badge-gold' : 'badge-red'}">${r.differential}</span></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+}
+
+function renderMilestoneTrack(milestones, hcp) {
+  const today = new Date().toISOString().split('T')[0];
+  const track = document.getElementById('milestoneTrack');
+  const labels = document.getElementById('milestoneLabels');
+  track.innerHTML = '';
+  labels.innerHTML = '';
+
+  for (let i = 0; i < milestones.length; i++) {
+    const m = milestones[i];
+    const reached = hcp !== null && hcp <= m.hcp + 0.5;
+    const isCurrent = m.date <= today && (i === milestones.length-1 || milestones[i+1].date > today);
+
+    if (i > 0) {
+      const line = document.createElement('div');
+      line.className = 'milestone-line' + (reached ? ' reached' : '');
+      track.appendChild(line);
+    }
+    const dot = document.createElement('div');
+    dot.className = 'milestone-dot' + (isCurrent ? ' current' : reached ? ' reached' : '');
+    track.appendChild(dot);
+  }
+
+  milestones.forEach((m, i) => {
+    const reached = hcp !== null && hcp <= m.hcp + 0.5;
+    const isCurrent = m.date <= today && (i === milestones.length-1 || milestones[i+1].date > today);
+    const item = document.createElement('div');
+    item.className = 'milestone-item' + (isCurrent ? ' current' : reached ? ' reached' : '');
+    item.innerHTML = `<strong>${m.hcp}</strong>${m.label}<br><span style="font-size:10px">${m.date.slice(5)}</span>`;
+    labels.appendChild(item);
+  });
+}
+
+// ── CHART ──────────────────────────────────────────────────────────────────
+function drawChart() {
+  const rounds = getRounds();
+  const profile = getProfile();
+  const canvas = document.getElementById('chartCanvas');
+  const empty  = document.getElementById('chartEmpty');
+
+  if (!rounds.length) {
+    canvas.style.display = 'none';
+    empty.style.display  = 'flex';
+    return;
+  }
+  canvas.style.display = 'block';
+  empty.style.display  = 'none';
+
+  const series = buildTimeSeries(rounds);
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const W = rect.width || canvas.offsetWidth || 800;
+  const H = 340;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const padL = 52, padR = 24, padT = 24, padB = 40;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  const target = profile.targetHcp;
+  const hcpValues = series.map(s => s.hcp).filter(Boolean);
+  const maxHcp = Math.max(...hcpValues, profile.startingHcp) + 1;
+  const minHcp = Math.min(...hcpValues, target) - 1;
+
+  function xPos(i) { return padL + (i / Math.max(series.length-1, 1)) * plotW; }
+  function yPos(v) { return padT + ((maxHcp - v) / (maxHcp - minHcp)) * plotH; }
+
+  // Background gradient
+  const bg = ctx.createLinearGradient(0, padT, 0, padT+plotH);
+  bg.addColorStop(0, 'rgba(198,168,75,0.04)');
+  bg.addColorStop(1, 'rgba(198,168,75,0)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(padL, padT, plotW, plotH);
+
+  // Y axis labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.textAlign = 'right';
+  const yTicks = 5;
+  for (let i = 0; i <= yTicks; i++) {
+    const v = minHcp + ((maxHcp - minHcp) / yTicks) * i;
+    const y = yPos(v);
+    ctx.fillText(v.toFixed(1), padL - 8, y + 4);
+    // subtle tick
+    ctx.strokeStyle = 'rgba(30,45,64,0.6)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
+  }
+
+  // Goal line (red dashed)
+  const goalY = yPos(target);
+  ctx.strokeStyle = '#ef444466';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 5]);
+  ctx.beginPath();
+  ctx.moveTo(padL, goalY);
+  ctx.lineTo(padL + plotW, goalY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#ef4444';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Goal ' + target, padL + plotW + 4, goalY + 4);
+
+  // Area fill under handicap line
+  if (series.length > 1) {
+    ctx.beginPath();
+    ctx.moveTo(xPos(0), yPos(series[0].hcp));
+    for (let i = 1; i < series.length; i++) {
+      const x0 = xPos(i-1), y0 = yPos(series[i-1].hcp);
+      const x1 = xPos(i),   y1 = yPos(series[i].hcp);
+      const cpx = (x0+x1)/2;
+      ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
+    }
+    ctx.lineTo(xPos(series.length-1), padT+plotH);
+    ctx.lineTo(xPos(0), padT+plotH);
+    ctx.closePath();
+    const areaGrad = ctx.createLinearGradient(0, padT, 0, padT+plotH);
+    areaGrad.addColorStop(0, 'rgba(198,168,75,0.15)');
+    areaGrad.addColorStop(1, 'rgba(198,168,75,0)');
+    ctx.fillStyle = areaGrad;
+    ctx.fill();
+  }
+
+  // Handicap line (smooth bezier)
+  ctx.strokeStyle = '#c6a84b';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  if (series.length === 1) {
+    ctx.arc(xPos(0), yPos(series[0].hcp), 4, 0, Math.PI*2);
+  } else {
+    ctx.moveTo(xPos(0), yPos(series[0].hcp));
+    for (let i = 1; i < series.length; i++) {
+      const x0 = xPos(i-1), y0 = yPos(series[i-1].hcp);
+      const x1 = xPos(i),   y1 = yPos(series[i].hcp);
+      const cpx = (x0+x1)/2;
+      ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
+    }
+  }
+  ctx.stroke();
+
+  // Data points
+  series.forEach((s, i) => {
+    ctx.beginPath();
+    ctx.arc(xPos(i), yPos(s.hcp), 4, 0, Math.PI*2);
+    ctx.fillStyle = '#c6a84b';
+    ctx.fill();
+    ctx.strokeStyle = '#0a0e1a';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+
+  // X axis dates (show up to 6)
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  const step = Math.max(1, Math.floor(series.length / 6));
+  for (let i = 0; i < series.length; i += step) {
+    const x = xPos(i);
+    ctx.fillText(series[i].date.slice(5), x, padT + plotH + 20);
+  }
+}
+
+// ── STATS ──────────────────────────────────────────────────────────────────
+const BENCHMARKS = [
+  { key: 'fairwayPct', label: 'Fairway %',      current16: 48, target10: 65, unit: '%',  higherBetter: true,  fmt: v => v.toFixed(0)+'%' },
+  { key: 'girPct',     label: 'GIR %',           current16: 28, target10: 46, unit: '%',  higherBetter: true,  fmt: v => v.toFixed(0)+'%' },
+  { key: 'avgPutts',   label: 'Avg Putts/Round', current16: 34, target10: 31, unit: '',   higherBetter: false, fmt: v => v.toFixed(1) },
+  { key: 'avgPenalty', label: 'Avg Penalties',   current16: 3,  target10: 1.5,unit: '',   higherBetter: false, fmt: v => v.toFixed(1) },
+  { key: 'scoringAvg', label: 'Scoring Avg',     current16: 87, target10: 82, unit: '',   higherBetter: false, fmt: v => v.toFixed(1) },
+];
+
+function calcStats(rounds) {
+  if (!rounds.length) return null;
+  const n = rounds.length;
+  const totalFW = rounds.reduce((s,r) => s + r.fairwaysHit, 0);
+  const totalFWT= rounds.reduce((s,r) => s + (r.fairwaysTotal||14), 0);
+  const totalGIR= rounds.reduce((s,r) => s + r.gir, 0);
+  return {
+    fairwayPct: totalFWT ? (totalFW / totalFWT * 100) : 0,
+    girPct:     (totalGIR / (n * 18) * 100),
+    avgPutts:   rounds.reduce((s,r) => s+r.putts, 0) / n,
+    avgPenalty: rounds.reduce((s,r) => s+r.penalties, 0) / n,
+    scoringAvg: rounds.reduce((s,r) => s+r.grossScore, 0) / n,
+  };
+}
+
+function calcStats5(rounds) {
+  const last5 = [...rounds].sort((a,b) => new Date(b.date)-new Date(a.date)).slice(0,5);
+  return calcStats(last5);
+}
+
+function renderStats() {
+  const rounds = getRounds();
+  const stats  = calcStats(rounds);
+  const cards  = document.getElementById('statsCards');
+  const bench  = document.getElementById('benchmarks');
+
+  if (!stats) {
+    cards.innerHTML = '';
+    bench.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">No data yet</div><div>Log some rounds to see your stats.</div></div>`;
+    return;
+  }
+
+  cards.innerHTML = BENCHMARKS.map(b => `
+    <div class="card">
+      <div class="card-title">${b.label}</div>
+      <div class="card-value" style="font-size:36px;padding-top:4px">${b.fmt(stats[b.key])}</div>
+      <div class="card-sub">target: ${b.fmt(b.target10)}</div>
+    </div>
+  `).join('');
+
+  bench.innerHTML = BENCHMARKS.map(b => {
+    const val = stats[b.key];
+    const lo = b.higherBetter ? b.current16 : b.target10;
+    const hi = b.higherBetter ? b.target10  : b.current16;
+    const fillPct = Math.min(100, Math.max(0, ((val - lo) / (hi - lo)) * 100));
+    const targetPct = 100;
+    const good = b.higherBetter ? val >= b.target10 : val <= b.target10;
+    const ok   = b.higherBetter ? val >= (b.current16 + (b.target10-b.current16)*0.5) : val <= (b.current16 - (b.current16-b.target10)*0.5);
+    const barColor = good ? 'var(--teal)' : ok ? 'var(--gold)' : 'var(--red)';
+    const gapLabel = good ? `✓ At target` : `Gap: ${b.higherBetter ? '+' : '-'}${Math.abs(val-b.target10).toFixed(1)}${b.unit} to reach target`;
+    const gapClass = good ? 'gap-good' : ok ? 'gap-ok' : 'gap-bad';
+    return `
+      <div class="bench-row">
+        <div class="bench-header">
+          <div class="bench-name">${b.label}</div>
+          <div class="bench-values">${b.fmt(val)} / target: ${b.fmt(b.target10)}</div>
+        </div>
+        <div class="bench-bar-bg">
+          <div class="bench-bar-fill" style="width:${fillPct}%;background:${barColor}"></div>
+          <div class="bench-bar-target" style="left:calc(${targetPct}% - 1px)"></div>
+        </div>
+        <div class="bench-gap ${gapClass}">${gapLabel}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── INSIGHTS ───────────────────────────────────────────────────────────────
+function renderInsights() {
+  const rounds = getRounds();
+  const el = document.getElementById('insightsContent');
+
+  if (rounds.length < 2) {
+    el.innerHTML = `<div class="insight-card">
+      <div class="insight-badge">Getting Started</div>
+      <div class="insight-title">Log More Rounds</div>
+      <div class="insight-body">Log at least 2 rounds to see personalized insights. Your insights will analyze your trailing 5-round averages against 10-handicap benchmarks and surface your single biggest improvement opportunity.</div>
+    </div>`;
+    return;
+  }
+
+  const stats5 = calcStats5(rounds);
+  const hcp    = handicapIndexFromRounds(rounds);
+  const profile= getProfile();
+
+  // Calculate gap scores (normalized distance from target)
+  const gaps = BENCHMARKS.map(b => {
+    const val = stats5[b.key];
+    const range = Math.abs(b.target10 - b.current16);
+    const gap = b.higherBetter ? b.target10 - val : val - b.target10;
+    const normalized = gap / range;
+    return { ...b, val, gap, normalized };
+  });
+
+  gaps.sort((a,b) => b.normalized - a.normalized);
+  const biggest = gaps[0];
+
+  const tips = {
+    fairwayPct: {
+      title: 'Driving Accuracy Is Your Biggest Lever',
+      body: `You're hitting <strong>${biggest.fmt(biggest.val)}</strong> of fairways over your last 5 rounds. The 10-handicap benchmark is ~65%. Getting your driving accuracy from ${biggest.fmt(biggest.val)} to ${biggest.fmt(biggest.target10)} would put you in better positions all day, reducing scrambling and pressure on your short game.<br><br><strong>Practice focus:</strong> Tee shot consistency — consider choking down on driver for 2 weeks, or using 3-wood on tight holes. Aim at the fat part of the fairway rather than optimistic lines. Course management off the tee is worth more than distance.`,
+      drill: 'Aim at a 30-yard-wide landing zone, not just the fairway center'
+    },
+    girPct: {
+      title: 'Approach Shots Are Your Biggest Opportunity',
+      body: `You're hitting <strong>${biggest.fmt(biggest.val)}</strong> of greens in regulation over your last 5 rounds. The 10-handicap benchmark is ~46%. Improving GIR % reduces pressure on your short game and directly translates to lower scores — every extra GIR is worth roughly 0.5 strokes saved.<br><br><strong>Practice focus:</strong> Approach shots from 100–150 yards. This is the most common approach distance for a 16-handicap. Dial in your yardages precisely with each iron, and commit fully to hitting the center of the green rather than pin-hunting.`,
+      drill: '50 shots from 120 yards during your next range session — track where each one lands'
+    },
+    avgPutts: {
+      title: 'The Putting Green Is Costing You Strokes',
+      body: `You're averaging <strong>${biggest.fmt(biggest.val)} putts</strong> per round over your last 5 rounds. Getting to the 31-putt benchmark would save ~${(biggest.val - biggest.target10).toFixed(1)} strokes per round — one of the highest-ROI improvements available.<br><br><strong>Practice focus:</strong> Two components: (1) Lag putting — from 30+ feet, focus on distance control to leave yourself inside 3 feet. (2) Make more 4–8 footers — this is where handicap golfers lose the most putts. Build a routine and practice the straight 6-footer until it's automatic.`,
+      drill: 'Putt from 20 feet focusing on leaving it within a 3-foot circle'
+    },
+    avgPenalty: {
+      title: 'Penalty Strokes Are Killing Your Scorecard',
+      body: `You're averaging <strong>${biggest.fmt(biggest.val)} penalties</strong> per round over your last 5 rounds. The 10-handicap target is ~1.5. Eliminating just 1 penalty stroke per round is a direct stroke gained — no swing changes required, just smarter decisions.<br><br><strong>Practice focus:</strong> Course management and mental discipline. Identify your 2–3 highest-risk shots each round (e.g., driver over water, hero shots from trouble) and make the conservative play. If you're in a bad lie, the safest play out is usually the right play.`,
+      drill: 'Before every shot from rough or trouble, ask "what is the lowest-risk escape?"'
+    },
+    scoringAvg: {
+      title: 'Overall Scoring Efficiency Needs Work',
+      body: `Your scoring average over the last 5 rounds is <strong>${biggest.fmt(biggest.val)}</strong>. The 10-handicap target is ~82. The good news: working on any of the other fundamentals (GIR, putting, penalties) will directly reduce your scoring average.<br><br><strong>Practice focus:</strong> Focus on "damage control" — when you miss a shot, your next shot is the most important. Avoid double-bogeys by always having an escape plan. One double-bogey costs you the same as two bogeys.`,
+      drill: 'Count the number of holes where you "took your medicine" vs. tried a hero shot'
+    },
+  };
+
+  const tip = tips[biggest.key];
+  const otherGaps = gaps.slice(1,4);
+
+  const progressHtml = hcp !== null ? `
+    <div style="display:flex;gap:16px;margin-top:24px;flex-wrap:wrap;">
+      ${[{label:'Starting HCP', val: profile.startingHcp.toFixed(1), color:'var(--text-muted)'},
+         {label:'Current HCP', val: hcp.toFixed(1), color:'var(--gold)'},
+         {label:'Target HCP',  val: profile.targetHcp.toFixed(1), color:'var(--teal)'}].map(s => `
+        <div style="background:var(--bg-navy);border:1px solid var(--border);border-radius:8px;padding:12px 20px;text-align:center">
+          <div style="font-size:11px;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase">${s.label}</div>
+          <div style="font-size:24px;font-weight:800;color:${s.color}">${s.val}</div>
+        </div>`).join('')}
+    </div>
+  ` : '';
+
+  el.innerHTML = `
+    <div class="insight-card">
+      <div class="insight-badge">Top Priority</div>
+      <div class="insight-title">${tip.title}</div>
+      <div class="insight-stat">${biggest.fmt(biggest.val)}<span style="font-size:14px;color:var(--text-muted);font-weight:400"> current vs ${biggest.fmt(biggest.target10)} target</span></div>
+      <div class="insight-body">${tip.body}</div>
+      <div style="background:var(--bg-navy);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-top:16px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:4px">Drill of the Week</div>
+        <div style="font-size:13px;color:var(--text-muted)">${tip.drill}</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
+      ${otherGaps.map(g => {
+        const good = g.normalized <= 0;
+        return `<div class="card">
+          <div class="card-title">${g.label}</div>
+          <div style="font-size:24px;font-weight:800;color:${good ? 'var(--teal)' : 'var(--text)'};margin:8px 0">${g.fmt(g.val)}</div>
+          <div style="font-size:11px;color:${good ? 'var(--teal)' : 'var(--text-muted)'}">
+            ${good ? '✓ At or above target' : `Gap: ${Math.abs(g.gap).toFixed(1)} to target (${g.fmt(g.target10)})`}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    ${progressHtml}
+  `;
+}
+
+// ── HISTORY ────────────────────────────────────────────────────────────────
+function renderHistory() {
+  const rounds = [...getRounds()].sort((a,b) => new Date(b.date)-new Date(a.date));
+  const tbody  = document.getElementById('historyBody');
+  const empty  = document.getElementById('historyEmpty');
+
+  if (!rounds.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = rounds.map(r => {
+    const fwPct = r.fairwaysTotal ? Math.round(r.fairwaysHit/r.fairwaysTotal*100) : 0;
+    const girPct= Math.round(r.gir/18*100);
+    const dc    = r.differential < 12 ? 'badge-teal' : r.differential < 16 ? 'badge-gold' : 'badge-red';
+    return `<tr>
+      <td>${r.date}</td>
+      <td>${esc(r.course)} <span style="color:var(--text-muted);font-size:11px">${r.tees}</span></td>
+      <td><strong>${r.grossScore}</strong></td>
+      <td><span class="badge ${dc}">${r.differential}</span></td>
+      <td>${fwPct}%</td>
+      <td>${girPct}%</td>
+      <td>${r.putts}</td>
+      <td>${r.penalties}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteRound('${r.id}')">Delete</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function deleteRound(id) {
+  if (!confirm('Delete this round?')) return;
+  saveRounds(getRounds().filter(r => r.id !== id));
+  refresh();
+}
+
+// ── EXPORT ─────────────────────────────────────────────────────────────────
+function exportCSV() {
+  const rounds = [...getRounds()].sort((a,b) => new Date(a.date)-new Date(b.date));
+  if (!rounds.length) { alert('No rounds to export.'); return; }
+  const header = ['Date','Course','Tees','GrossScore','CourseRating','SlopeRating','Differential','FairwaysHit','FairwaysTotal','GIR','Putts','Penalties'];
+  const rows = rounds.map(r => [r.date, r.course, r.tees, r.grossScore, r.courseRating, r.slopeRating, r.differential, r.fairwaysHit, r.fairwaysTotal, r.gir, r.putts, r.penalties]);
+  const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new URL('data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'handicap-rounds.csv';
+  a.click();
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(d) {
+  if (!d) return '';
+  const [y,m,day] = d.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[+m-1]} ${+day}, ${y}`;
+}
+
+// ── REFRESH ────────────────────────────────────────────────────────────────
+function refresh() {
+  renderDashboard();
+  renderStats();
+  renderInsights();
+  renderHistory();
+  if (activeView === 'chart') drawChart();
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  const profile = getProfile();
+  if (!profile) {
+    document.getElementById('setupOverlay').style.display = 'flex';
+  } else {
+    document.getElementById('setupOverlay').style.display = 'none';
+    refresh();
+  }
+});
+
+window.addEventListener('resize', () => {
+  if (activeView === 'chart') drawChart();
+});
+</script>
+</body>
+</html>
